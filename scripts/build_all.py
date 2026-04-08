@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from lab03.config import BuildConfig
 from lab03.dataset_utils import load_medical_records
 from lab03.evaluation import evaluate_retriever, save_evaluation_report
@@ -26,4 +32,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
