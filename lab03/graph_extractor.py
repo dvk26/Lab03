@@ -45,10 +45,6 @@ class MedicalGraphExtractor(TransformComponent):
     max_sentences: int = 5
     min_sentence_chars: int = 35
 
-    def __init__(self, max_sentences: int = 5, min_sentence_chars: int = 35) -> None:
-        self.max_sentences = max_sentences
-        self.min_sentence_chars = min_sentence_chars
-
     def __call__(self, llama_nodes: list[BaseNode], **kwargs) -> list[BaseNode]:
         for llama_node in llama_nodes:
             metadata = dict(llama_node.metadata)
