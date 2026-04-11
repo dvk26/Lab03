@@ -12,8 +12,8 @@ except ImportError:  # pragma: no cover - version fallback
 
 from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
 
+from lab03.artifact_store import load_graph_bundle
 from lab03.config import BuildConfig
-from lab03.graph_pipeline import load_graph_bundle
 
 
 def _normalize_rows(matrix: np.ndarray) -> np.ndarray:
@@ -101,9 +101,7 @@ class HybridGraphRetriever(BaseRetriever):
     def retrieve_with_diagnostics(self, query: str) -> list[dict]:
         return self._score_query(query)
 
-    def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
-        query = query_bundle.query_str
-        results = self._score_query(query)
+    def results_to_nodes(self, results: list[dict]) -> list[NodeWithScore]:
         nodes: list[NodeWithScore] = []
         for result in results:
             node = result["node"]
@@ -124,6 +122,11 @@ class HybridGraphRetriever(BaseRetriever):
             nodes.append(NodeWithScore(node=text_node, score=result["final_score"]))
         return nodes
 
+    def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+        query = query_bundle.query_str
+        results = self._score_query(query)
+        return self.results_to_nodes(results)
+
 
 def load_runtime_retriever(config: BuildConfig) -> HybridGraphRetriever:
     return HybridGraphRetriever.from_artifacts(
@@ -132,4 +135,3 @@ def load_runtime_retriever(config: BuildConfig) -> HybridGraphRetriever:
         alpha=config.alpha,
         top_k=config.top_k,
     )
-

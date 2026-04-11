@@ -100,14 +100,17 @@ Only chunk nodes are returned to the generator, but structural message passing i
 `lab03/llm.py` loads an allowed GGUF model through `llama-cpp-python`. The default is:
 
 - repository: `Jackrong/Qwen3.5-4B-Neo-GGUF`
-- file: `Qwen3.5-4B.Q4_K_M.gguf`
+- local default file: `Qwen3.5-4B.Q4_K_M.gguf`
+- Hugging Face Space default file: `Qwen3.5-4B.Q3_K_S.gguf`
 
 ## Project Structure
 
 ```text
 app.py
 requirements.txt
+requirements_train.txt
 lab03/
+  artifact_store.py
   config.py
   dataset_utils.py
   graph_extractor.py
@@ -128,13 +131,19 @@ evaluation/
 
 ## How To Run
 
-Install dependencies:
+Install the Hugging Face Space runtime dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Note: `llama-cpp-python` may need C/C++ build tools on a local Windows machine. The primary deployment target for this project is Hugging Face Spaces on Linux, and the repo includes `pre-requirements.txt` and `packages.txt` to make that build path more reliable.
+Install the full build + training stack locally or in Colab:
+
+```bash
+pip install -r requirements_train.txt
+```
+
+`requirements.txt` is intentionally slim for Hugging Face Spaces inference. The graph-building and GNN-training dependencies live in `requirements_train.txt`.
 
 Build the graph artifacts:
 
@@ -179,6 +188,10 @@ You can override the defaults with:
 - `STORAGE_DIR`
 - `MODEL_REPO`
 - `MODEL_FILENAME`
+- `LLM_CONTEXT_WINDOW`
+- `LLM_BATCH_SIZE`
+- `LLM_THREADS`
+- `LLM_VERBOSE`
 - `RETRIEVAL_ALPHA`
 - `RETRIEVAL_TOP_K`
 - `GNN_EPOCHS`
@@ -212,6 +225,8 @@ For free-tier deployment, the best pattern is:
 3. let the Space only load artifacts and run inference
 
 Do not rebuild the graph or retrain the GNN on every app start.
+
+The committed Space metadata uses `sdk: gradio`, so Hugging Face reads `requirements.txt`, `pre-requirements.txt`, and `packages.txt`. The `Dockerfile` only matters if you intentionally switch the Space to `sdk: docker`.
 
 ## Lab Requirement Mapping
 

@@ -9,21 +9,45 @@ from huggingface_hub import hf_hub_download
 
 from lab03.config import BuildConfig
 
+DEFAULT_SPACE_MODEL_FILENAMES = (
+    "Qwen3.5-4B.Q3_K_S.gguf",
+    "Qwen3.5-4B.Q2_K.gguf",
+    "Qwen3.5-4B.Q4_K_M.gguf",
+)
+
 
 def strip_reasoning_blocks(text: str) -> str:
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE)
     return text.strip()
 
 
-def ensure_allowed_model(config: BuildConfig) -> Path:
-    local_path = config.models_dir.resolve() / config.model_filename
+def model_filename_candidates(config: BuildConfig) -> list[str]:
+    if os.getenv("MODEL_FILENAME"):
+        return [config.model_filename]
+
+    candidates = [config.model_filename]
+    if os.getenv("SPACE_ID") and config.model_repo == "Jackrong/Qwen3.5-4B-Neo-GGUF":
+        candidates.extend(DEFAULT_SPACE_MODEL_FILENAMES)
+
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate not in seen:
+            ordered.append(candidate)
+            seen.add(candidate)
+    return ordered
+
+
+def ensure_allowed_model(config: BuildConfig, model_filename: str) -> Path:
+    local_path = config.models_dir.resolve() / model_filename
     if local_path.exists():
         return local_path
     downloaded = hf_hub_download(
         repo_id=config.model_repo,
-        filename=config.model_filename,
+        filename=model_filename,
         local_dir=str(config.models_dir.resolve()),
         local_dir_use_symlinks=False,
+        token=os.getenv("HF_TOKEN"),
     )
     return Path(downloaded).resolve()
 
@@ -38,16 +62,36 @@ class LlamaCppGenerator:
                 "The Hugging Face Space target environment remains the primary deployment environment."
             ) from exc
 
-        model_path = ensure_allowed_model(config)
-        threads = max(1, (os.cpu_count() or 2) - 1)
-        self.client = Llama(
-            model_path=str(model_path),
-            n_ctx=4096,
-            n_threads=threads,
-            n_batch=256,
-            chat_format="chatml",
-            verbose=False,
-        )
+        load_errors: list[str] = []
+        self.model_filename: str | None = None
+        self.model_path: Path | None = None
+
+        for model_filename in model_filename_candidates(config):
+            try:
+                model_path = ensure_allowed_model(config, model_filename)
+                self.client = Llama(
+                    model_path=str(model_path),
+                    n_ctx=config.llm_context_window,
+                    n_threads=config.llm_threads,
+                    n_batch=min(config.llm_batch_size, config.llm_context_window),
+                    n_gpu_layers=0,
+                    chat_format="chatml",
+                    verbose=config.llm_verbose,
+                )
+                self.model_filename = model_filename
+                self.model_path = model_path
+                break
+            except Exception as exc:  # pragma: no cover - depends on runtime resources
+                load_errors.append(f"{model_filename}: {exc}")
+        else:
+            attempted = "\n".join(load_errors) if load_errors else "No model candidates were tried."
+            raise RuntimeError(
+                "Unable to initialize llama-cpp with the configured GGUF model.\n"
+                f"Repository: {config.model_repo}\n"
+                f"Attempted files:\n{attempted}\n\n"
+                "On Hugging Face Spaces, prefer a smaller quant, keep Python 3.10, "
+                "and reduce LLM_CONTEXT_WINDOW / LLM_BATCH_SIZE if memory is tight."
+            )
 
     def _build_context(self, retrieved_nodes: Sequence) -> str:
         parts = []

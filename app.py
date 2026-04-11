@@ -76,12 +76,22 @@ def build_demo() -> gr.Blocks:
         if not question.strip():
             return "Please enter a question.", "", "{}"
 
-        runtime.retriever.set_runtime_params(alpha=alpha, top_k=top_k)
-        diagnostics = runtime.retriever.retrieve_with_diagnostics(question)
-        retrieved_nodes = runtime.retriever.retrieve(question)
-        answer = runtime.generator.generate_answer(question, retrieved_nodes)
-        diagnostics_json = json.dumps(diagnostics, indent=2, ensure_ascii=False)
-        return answer, format_contexts(diagnostics), diagnostics_json
+        diagnostics: list[dict] = []
+        try:
+            runtime.retriever.set_runtime_params(alpha=alpha, top_k=top_k)
+            diagnostics = runtime.retriever.retrieve_with_diagnostics(question)
+            retrieved_nodes = runtime.retriever.results_to_nodes(diagnostics)
+            answer = runtime.generator.generate_answer(question, retrieved_nodes)
+            diagnostics_json = json.dumps(diagnostics, indent=2, ensure_ascii=False)
+            return answer, format_contexts(diagnostics), diagnostics_json
+        except Exception as exc:
+            diagnostics_json = json.dumps(
+                {"error": str(exc), "alpha": alpha, "top_k": top_k},
+                indent=2,
+                ensure_ascii=False,
+            )
+            context_text = format_contexts(diagnostics) if diagnostics else ""
+            return f"Runtime error: {exc}", context_text, diagnostics_json
 
     with gr.Blocks(title="Lab03 GNN GraphRAG") as demo:
         gr.Markdown(
@@ -125,6 +135,7 @@ def build_demo() -> gr.Blocks:
             outputs=[answer, contexts, diagnostics],
         )
 
+    demo.queue(default_concurrency_limit=1)
     return demo
 
 
@@ -132,4 +143,4 @@ demo = build_demo()
 
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(show_error=True)

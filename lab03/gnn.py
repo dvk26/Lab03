@@ -12,8 +12,8 @@ from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
 from torch_geometric.utils import negative_sampling
 
+from lab03.artifact_store import load_graph_bundle
 from lab03.config import BuildConfig
-from lab03.graph_pipeline import load_graph_bundle
 
 
 @dataclass(slots=True)
