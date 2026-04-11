@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Cài llama-cpp-python từ pre-built wheel TRƯỚC (tránh OOM khi compile)
 RUN pip install --no-cache-dir \
-    llama-cpp-python==0.3.9 \
+    "llama-cpp-python==0.3.19" \
     --prefer-binary \
     --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
 
