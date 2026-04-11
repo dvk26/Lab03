@@ -16,13 +16,13 @@ def strip_reasoning_blocks(text: str) -> str:
 
 
 def ensure_allowed_model(config: BuildConfig) -> Path:
-    local_path = config.models_dir / config.model_filename
+    local_path = config.models_dir.resolve() / config.model_filename
     if local_path.exists():
-        return local_path.resolve()
+        return local_path
     downloaded = hf_hub_download(
         repo_id=config.model_repo,
         filename=config.model_filename,
-        local_dir=config.models_dir,
+        local_dir=str(config.models_dir.resolve()),
         local_dir_use_symlinks=False,
     )
     return Path(downloaded).resolve()
