@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 try:
     from llama_index.core.base.base_retriever import BaseRetriever
@@ -22,6 +21,34 @@ def _normalize_rows(matrix: np.ndarray) -> np.ndarray:
     return matrix / norms
 
 
+def _load_embedder(model_name: str):
+    """Load fastembed if available (no torch needed), otherwise fall back to sentence-transformers."""
+    try:
+        from fastembed import TextEmbedding
+        return TextEmbedding(model_name)
+    except Exception:
+        from sentence_transformers import SentenceTransformer
+        return SentenceTransformer(model_name)
+
+
+def _embed(embedder, text: str) -> np.ndarray:
+    """Encode a single query string using whichever embedder was loaded."""
+    try:
+        from fastembed import TextEmbedding
+        if isinstance(embedder, TextEmbedding):
+            vec = np.array(list(embedder.embed([text]))[0], dtype=np.float32)
+            vec = vec / max(np.linalg.norm(vec), 1e-12)
+            return vec
+    except Exception:
+        pass
+    # sentence-transformers path
+    return embedder.encode(
+        [text],
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    )[0].astype(np.float32)
+
+
 class HybridGraphRetriever(BaseRetriever):
     def __init__(
         self,
@@ -36,7 +63,7 @@ class HybridGraphRetriever(BaseRetriever):
         self.nodes = nodes
         self.raw_embeddings = _normalize_rows(raw_embeddings.astype(np.float32))
         self.structural_embeddings = _normalize_rows(structural_embeddings.astype(np.float32))
-        self.embedder = SentenceTransformer(embed_model_name)
+        self.embedder = _load_embedder(embed_model_name)
         self.alpha = alpha
         self.top_k = top_k
         self.candidate_indices = [
@@ -73,11 +100,7 @@ class HybridGraphRetriever(BaseRetriever):
             self.top_k = int(top_k)
 
     def _score_query(self, query: str) -> list[dict]:
-        query_vector = self.embedder.encode(
-            [query],
-            convert_to_numpy=True,
-            normalize_embeddings=True,
-        )[0].astype(np.float32)
+        query_vector = _embed(self.embedder, query)
 
         raw_scores = self.raw_embeddings[self.candidate_indices] @ query_vector
         structural_scores = self.structural_embeddings[self.candidate_indices] @ query_vector
