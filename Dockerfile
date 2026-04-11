@@ -18,6 +18,9 @@ COPY requirements_hf.txt .
 RUN pip install --no-cache-dir -r requirements_hf.txt
 
 COPY . .
-RUN pip install --no-cache-dir -e .
+
+# Pure-Python package — set PYTHONPATH instead of running pip install -e .
+# This avoids pip build-isolation downloading setuptools at build time.
+ENV PYTHONPATH=/app
 
 CMD ["python", "app.py"]
