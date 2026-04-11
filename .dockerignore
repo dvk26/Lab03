@@ -1,0 +1,26 @@
+.git
+.gitignore
+.env
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# LlamaIndex graph store — large (50-200MB), only needed during build_all.py, not at runtime
+storage
+
+# Evaluation output — not needed at runtime
+evaluation
+
+# GGUF model — too large (2.7GB), downloaded at runtime by llm.py
+models
+
+# Dev/build-only files
+colab_run_lab03.ipynb
+Lab03.pdf
+pre-requirements.txt
+requirements.txt
+requirements_train.txt
+scripts
