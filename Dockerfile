@@ -17,10 +17,12 @@ RUN pip install --no-cache-dir \
 COPY requirements_hf.txt .
 RUN pip install --no-cache-dir -r requirements_hf.txt
 
-COPY . .
+# Copy only runtime-needed files — avoids pulling in storage/, models/, evaluation/, etc.
+COPY app.py .
+COPY pyproject.toml .
+COPY lab03/ ./lab03/
+COPY artifacts/ ./artifacts/
 
-# Pure-Python package — set PYTHONPATH instead of running pip install -e .
-# This avoids pip build-isolation downloading setuptools at build time.
 ENV PYTHONPATH=/app
 
 CMD ["python", "app.py"]
