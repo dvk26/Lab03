@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # llama-cpp-python prebuilt CPU wheel (no compilation, fast)
 RUN pip install --no-cache-dir \
-    "llama-cpp-python==0.3.20" \
+    "llama-cpp-python==0.3.19" \
     --prefer-binary \
     --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
 
