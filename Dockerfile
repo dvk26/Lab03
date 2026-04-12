@@ -2,20 +2,17 @@ FROM python:3.10-bookworm
 
 WORKDIR /app
 
-# uid 1000 is required by HF Spaces Docker runtime
 RUN useradd -m -u 1000 user && \
     mkdir -p /app/models /app/artifacts && \
     chown -R 1000:1000 /app /home/user
 
-# llama-cpp-python: binary wheel ONLY — never compile from source (OOMKills HF free-tier builder).
+# llama-cpp-python: use --extra-index-url (not --find-links) for abetlen's index page
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
     --only-binary=llama-cpp-python \
     --prefer-binary \
-    --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-# Runtime deps inlined — avoids COPY requirements_hf.txt failures on HF BuildKit.
-# onnxruntime is NOT pinned here — fastembed picks a compatible version automatically.
 RUN pip install --no-cache-dir \
     "fastembed==0.7.4" \
     "gradio==5.25.0" \
@@ -25,11 +22,16 @@ RUN pip install --no-cache-dir \
 
 COPY --chown=1000:1000 app.py .
 COPY --chown=1000:1000 lab03/ ./lab03/
+COPY --chown=1000:1000 artifacts/ ./artifacts/
 
 USER 1000
 
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    GRADIO_SERVER_NAME=0.0.0.0 \
+    GRADIO_SERVER_PORT=7860
+
+EXPOSE 7860
 
 CMD ["python", "app.py"]

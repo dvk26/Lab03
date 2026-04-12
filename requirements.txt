@@ -1,5 +1,5 @@
 --prefer-binary
---find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 gradio==5.25.0
