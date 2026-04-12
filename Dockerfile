@@ -2,9 +2,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# git is needed by huggingface_hub for LFS; no build-essential needed (prebuilt wheels only)
+# git is needed by huggingface_hub for LFS; libgomp1 is needed by ONNXRuntime/fastembed.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # llama-cpp-python prebuilt CPU wheel (no compilation, fast)

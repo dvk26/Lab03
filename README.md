@@ -223,7 +223,9 @@ For free-tier deployment, the best pattern is:
 
 Do not rebuild the graph or retrain the GNN on every app start.
 
-The committed Space metadata uses `sdk: gradio`, so Hugging Face reads `requirements.txt`, `pre-requirements.txt`, and `packages.txt`. The `Dockerfile` only matters if you intentionally switch the Space to `sdk: docker`.
+The committed Space metadata uses `sdk: docker`, so Hugging Face builds from `Dockerfile`. In this mode, `requirements.txt`, `pre-requirements.txt`, and `packages.txt` are not used by the Space builder unless your Dockerfile uses them explicitly.
+
+For this repo, the Space also needs the generated `artifacts/` files committed or mounted from a dataset repo. The current app does not rebuild the graph or retrain the GNN inside the Space at startup.
 
 ## Lab Requirement Mapping
 

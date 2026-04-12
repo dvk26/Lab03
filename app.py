@@ -18,13 +18,16 @@ class Runtime:
     def ensure_artifacts(self) -> None:
         required = [
             self.config.artifacts_dir / "graph_nodes.json",
+            self.config.artifacts_dir / "graph_edges.json",
+            self.config.artifacts_dir / "manifest.json",
             self.config.artifacts_dir / "raw_embeddings.npy",
             self.config.artifacts_dir / "edge_index.npy",
         ]
         missing = [str(path) for path in required if not path.exists()]
         if missing:
             raise FileNotFoundError(
-                "Missing artifacts. Run `python scripts/build_all.py` first.\n"
+                "Missing artifacts. Run `python scripts/build_all.py` locally and push the generated "
+                "`artifacts/` files to the Space repo.\n"
                 + "\n".join(missing)
             )
 
