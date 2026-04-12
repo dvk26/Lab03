@@ -8,6 +8,9 @@ RUN useradd -m -u 1000 user && \
     chown -R 1000:1000 /app /home/user
 
 # Use the prebuilt CPU wheel only; never compile llama.cpp from source in Spaces.
+RUN python -m pip install --no-cache-dir --upgrade pip
+
+# Use the prebuilt CPU wheel only; never compile llama.cpp from source in Spaces.
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
     --only-binary=llama-cpp-python \
