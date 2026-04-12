@@ -7,22 +7,23 @@ RUN useradd -m -u 1000 user && \
     mkdir -p /app/models /app/artifacts && \
     chown -R 1000:1000 /app /home/user
 
-# llama-cpp-python: binary wheel only; never compile from source on the HF builder.
+# llama-cpp-python: binary wheel only — never compile from source (OOMKills HF free-tier builder).
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
     --only-binary=llama-cpp-python \
     --prefer-binary \
     --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-# Pin runtime deps to avoid resolver drift on HF's Python 3.10 image.
-COPY requirements_hf.txt .
-RUN pip install --no-cache-dir -r requirements_hf.txt
+# Runtime deps inlined — no COPY requirements_hf.txt needed (file may not exist in HF Space repo).
+RUN pip install --no-cache-dir \
+    "numpy>=1.26.0" \
+    "huggingface-hub>=0.30.0" \
+    "fastembed>=0.4.0" \
+    "llama-index-core>=0.10.0,<0.13.0" \
+    "gradio>=5.0.0"
 
 COPY --chown=1000:1000 app.py .
 COPY --chown=1000:1000 lab03/ ./lab03/
-# artifacts/ only contains .gitkeep right now — COPY of an empty dir fails on HF BuildKit.
-# The directory is already created above by mkdir -p /app/artifacts.
-# Once you build and commit real artifact files, add: COPY --chown=1000:1000 artifacts/ ./artifacts/
 
 USER 1000
 
