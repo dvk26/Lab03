@@ -11,16 +11,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm 
 
 # llama-cpp-python: binary wheel ONLY — never compile from source.
 # Compiling C++ OOMKills the HF free-tier builder (2 GB RAM limit).
-# If no prebuilt wheel matches, pip will exit with a clean error instead of OOMKilling.
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
     --only-binary=llama-cpp-python \
     --prefer-binary \
     --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-# Runtime deps
-COPY requirements_hf.txt .
-RUN pip install --no-cache-dir -r requirements_hf.txt
+# Install runtime deps one-by-one so the failing step is visible in build error output
+RUN pip install --no-cache-dir "numpy>=1.26.0"
+RUN pip install --no-cache-dir "huggingface-hub>=0.30.0"
+RUN pip install --no-cache-dir "fastembed>=0.4.0"
+RUN pip install --no-cache-dir "llama-index-core>=0.10.0,<0.13.0"
+RUN pip install --no-cache-dir "gradio>=5.0.0"
 
 COPY --chown=user app.py .
 COPY --chown=user pyproject.toml .
