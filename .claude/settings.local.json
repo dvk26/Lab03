@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(git -C hf_space_22127227 remote -v)",
+      "Read(//c/Users/Admin/Desktop/**)"
     ]
   }
 }

@@ -7,22 +7,24 @@ RUN useradd -m -u 1000 user && \
     mkdir -p /app/models /app/artifacts && \
     chown -R 1000:1000 /app /home/user
 
-# Use the prebuilt CPU wheel only; never compile llama.cpp from source in Spaces.
-RUN python -m pip install --no-cache-dir --upgrade pip
-
-# Use the prebuilt CPU wheel only; never compile llama.cpp from source in Spaces.
+# llama-cpp-python: binary wheel ONLY — never compile from source (OOMKills HF free-tier builder).
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
     --only-binary=llama-cpp-python \
     --prefer-binary \
     --find-links https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-COPY requirements_hf.txt .
-RUN pip install --no-cache-dir -r requirements_hf.txt
+# Runtime deps inlined — avoids COPY requirements_hf.txt failures on HF BuildKit.
+# onnxruntime is NOT pinned here — fastembed picks a compatible version automatically.
+RUN pip install --no-cache-dir \
+    "fastembed==0.7.4" \
+    "gradio==5.25.0" \
+    "huggingface-hub==0.30.2" \
+    "llama-index-core==0.12.52.post1" \
+    "numpy==1.26.4"
 
-COPY app.py .
-COPY lab03/ ./lab03/
-COPY artifacts/ ./artifacts/
+COPY --chown=1000:1000 app.py .
+COPY --chown=1000:1000 lab03/ ./lab03/
 
 USER 1000
 
