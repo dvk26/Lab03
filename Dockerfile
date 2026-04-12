@@ -6,6 +6,12 @@ RUN useradd -m -u 1000 user && \
     mkdir -p /app/models /app/artifacts && \
     chown -R 1000:1000 /app /home/user
 
+# musl: abetlen's prebuilt CPU wheels link against musl libc; install it so
+# libllama.so can find libc.musl-x86_64.so.1 on this glibc (Debian) host
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends musl && \
+    rm -rf /var/lib/apt/lists/*
+
 # llama-cpp-python: use --extra-index-url (not --find-links) for abetlen's index page
 RUN pip install --no-cache-dir \
     "llama-cpp-python==0.3.19" \
