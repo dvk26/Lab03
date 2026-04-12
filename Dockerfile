@@ -20,7 +20,9 @@ RUN pip install --no-cache-dir -r requirements_hf.txt
 
 COPY --chown=1000:1000 app.py .
 COPY --chown=1000:1000 lab03/ ./lab03/
-COPY --chown=1000:1000 artifacts/ ./artifacts/
+# artifacts/ only contains .gitkeep right now — COPY of an empty dir fails on HF BuildKit.
+# The directory is already created above by mkdir -p /app/artifacts.
+# Once you build and commit real artifact files, add: COPY --chown=1000:1000 artifacts/ ./artifacts/
 
 USER 1000
 
