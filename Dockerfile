@@ -6,14 +6,17 @@ RUN useradd -m -u 1000 user && \
     mkdir -p /app/models /app/artifacts && \
     chown -R 1000:1000 /app /home/user
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    libopenblas-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-RUN python -m pip install --no-cache-dir \
-    "llama-cpp-python==0.3.20" \
-    --only-binary=llama-cpp-python \
-    --prefer-binary \
-    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+ENV CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS"
 
+RUN python -m pip install --no-cache-dir -v "llama-cpp-python==0.3.20"
 RUN python -m pip install --no-cache-dir -v "numpy==1.26.4"
 RUN python -m pip install --no-cache-dir -v "onnxruntime==1.23.2"
 RUN python -m pip install --no-cache-dir -v "fastembed==0.7.4"
