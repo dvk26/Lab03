@@ -1,11 +1,6 @@
 ---
-title: lab03-gnn-graphrag
-emoji: 🧠
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
+Student name: Đặng Văn Kỳ
+Student id: 22127227
 ---
 
 # Lab 03: GNN-based GraphRAG for LLM Inference
