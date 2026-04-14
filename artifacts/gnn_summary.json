@@ -1,0 +1,7 @@
+{
+  "epochs": 60,
+  "final_loss": 1.1143214702606201,
+  "best_loss": 1.1137038469314575,
+  "hidden_dim": 384,
+  "dropout": 0.1
+}
