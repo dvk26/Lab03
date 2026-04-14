@@ -7,4 +7,4 @@ models/*
 *.pyc
 *.pyo
 *.pyd
-".claude/" 
+".claude/"
