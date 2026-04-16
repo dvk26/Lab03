@@ -40,7 +40,18 @@ ENV HOME=/home/user \
     MODEL_FILENAME=Qwen3.5-4B.Q2_K.gguf \
     LLM_CONTEXT_WINDOW=1024 \
     LLM_BATCH_SIZE=8 \
-    LLM_THREADS=1
+    LLM_THREADS=4
+
+RUN python - <<'EOF'
+from huggingface_hub import hf_hub_download
+import os
+hf_hub_download(
+    repo_id="Jackrong/Qwen3.5-4B-Neo-GGUF",
+    filename="Qwen3.5-4B.Q2_K.gguf",
+    local_dir="/app/models",
+    local_dir_use_symlinks=False,
+)
+EOF
 
 EXPOSE 7860
 
