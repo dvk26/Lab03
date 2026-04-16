@@ -25,6 +25,7 @@ RUN python -m pip install --no-cache-dir --prefer-binary "onnxruntime==1.23.2"
 RUN python -m pip install --no-cache-dir --prefer-binary "fastembed==0.7.4"
 RUN python -m pip install --no-cache-dir --prefer-binary "gradio==5.25.0"
 RUN python -m pip install --no-cache-dir --prefer-binary "llama-index-core==0.12.52.post1"
+RUN python -m pip install --no-cache-dir --prefer-binary "huggingface_hub>=0.23"
 
 COPY --chown=1000:1000 app.py .
 COPY --chown=1000:1000 lab03/ ./lab03/
@@ -39,17 +40,15 @@ ENV HOME=/home/user \
     GRADIO_SERVER_PORT=7860 \
     MODEL_FILENAME=Qwen3.5-4B.Q2_K.gguf \
     LLM_CONTEXT_WINDOW=1024 \
-    LLM_BATCH_SIZE=8 \
+    LLM_BATCH_SIZE=64 \
     LLM_THREADS=4
 
 RUN python - <<'EOF'
 from huggingface_hub import hf_hub_download
-import os
 hf_hub_download(
     repo_id="Jackrong/Qwen3.5-4B-Neo-GGUF",
     filename="Qwen3.5-4B.Q2_K.gguf",
     local_dir="/app/models",
-    local_dir_use_symlinks=False,
 )
 EOF
 
