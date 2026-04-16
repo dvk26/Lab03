@@ -44,7 +44,7 @@ This keeps graph construction reproducible on a Hugging Face Free Space and stil
 
 ### PyG graph export
 
-`lab03/graph_pipeline.py` builds a heterogeneous graph with:
+`lab03/graph_pipeline.py` builds a typed graph for PyTorch Geometric with:
 
 - `condition` nodes
 - `aspect` nodes
@@ -59,6 +59,9 @@ Edges include:
 - `HAS_SENTENCE`
 - typed condition-to-sentence relations such as `HAS_SYMPTOM_INFO`
 - sentence order edges
+- automatically generated reverse edges prefixed with `REV_...` for message passing
+
+If the persisted LlamaIndex files already exist under `property/`, the exporter reuses them directly instead of rebuilding the property graph from scratch.
 
 The pipeline saves:
 
@@ -66,19 +69,22 @@ The pipeline saves:
 - `artifacts/graph_edges.json`
 - `artifacts/raw_embeddings.npy`
 - `artifacts/edge_index.npy`
+- `artifacts/node_type_ids.npy`
+- `artifacts/edge_type_ids.npy`
 - `artifacts/records.jsonl`
 
 ### GNN model
 
-`lab03/gnn.py` implements a residual 2-layer `GCNConv` encoder:
+`lab03/gnn.py` implements a relation-aware residual 2-layer `RGCNConv` encoder. Node-type embeddings are added to the semantic input vectors, then message passing uses the exported relation ids:
 
 ```text
-h1 = GCN(x, edge_index)
-h2 = GCN(h1, edge_index)
+xt = x + type_embed(node_type)
+h1 = RGCN(xt, edge_index, edge_type)
+h2 = RGCN(h1, edge_index, edge_type)
 z  = normalize(x + h2)
 ```
 
-Training uses unsupervised edge reconstruction with negative sampling plus an alignment term that keeps the updated vectors compatible with the original semantic space.
+Training uses relation-aware edge reconstruction with negative sampling plus an alignment term that keeps the updated vectors compatible with the original semantic space.
 
 ### Hybrid retriever
 
@@ -197,10 +203,13 @@ You can override the defaults with:
 
 After the build and training stages, you should have:
 
-- a persisted LlamaIndex graph under `storage/property_graph`
+- a persisted LlamaIndex graph under `property/` by default
 - base graph artifacts under `artifacts/`
 - `artifacts/structural_embeddings.npy`
 - `artifacts/gnn_checkpoint.pt`
+- `artifacts/graph_edges.json`
+- `artifacts/node_type_ids.npy`
+- `artifacts/edge_type_ids.npy`
 - retrieval metrics in `evaluation/retrieval_metrics.json`
 
 ## Evaluation
@@ -232,7 +241,7 @@ For this repo, the Space also needs the generated `artifacts/` files committed o
 - healthcare corpus from Hugging Face: `Tonic/medquad`
 - LlamaIndex property graph: `PropertyGraphIndex.from_documents(...)`
 - PyTorch Geometric conversion: `lab03/graph_pipeline.py` + `lab03/gnn.py`
-- GNN model: residual 2-layer GCN
+- GNN model: relation-aware residual 2-layer RGCN
 - two similarity metrics: raw and structural
 - weighted linear fusion: `alpha * raw + (1 - alpha) * structural`
 - custom `BaseRetriever`: `lab03/retriever.py`

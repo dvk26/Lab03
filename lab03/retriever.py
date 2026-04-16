@@ -23,12 +23,21 @@ def _normalize_rows(matrix: np.ndarray) -> np.ndarray:
 
 def _load_embedder(model_name: str):
     """Load fastembed if available (no torch needed), otherwise fall back to sentence-transformers."""
+    fastembed_error: Exception | None = None
     try:
         from fastembed import TextEmbedding
         return TextEmbedding(model_name)
-    except Exception:
+    except Exception as exc:
+        fastembed_error = exc
+
+    try:
         from sentence_transformers import SentenceTransformer
         return SentenceTransformer(model_name)
+    except Exception as exc:
+        raise ImportError(
+            "No compatible query embedding backend is available. Install `fastembed` or "
+            "fix the local `sentence-transformers` / `transformers` versions."
+        ) from exc if fastembed_error is None else exc
 
 
 def _embed(embedder, text: str) -> np.ndarray:

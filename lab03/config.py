@@ -62,6 +62,7 @@ class BuildConfig:
     )
     artifacts_dir: Path = Path(os.getenv("ARTIFACTS_DIR", "artifacts"))
     storage_dir: Path = Path(os.getenv("STORAGE_DIR", "storage"))
+    property_graph_dir: Path = Path(os.getenv("PROPERTY_GRAPH_DIR", "property"))
     evaluation_dir: Path = Path(os.getenv("EVALUATION_DIR", "evaluation"))
     model_repo: str = os.getenv("MODEL_REPO", "Jackrong/Qwen3.5-4B-Neo-GGUF")
     model_filename: str = os.getenv("MODEL_FILENAME", _default_model_filename())
@@ -86,5 +87,6 @@ class BuildConfig:
     def ensure_dirs(self) -> None:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self.property_graph_dir.mkdir(parents=True, exist_ok=True)
         self.evaluation_dir.mkdir(parents=True, exist_ok=True)
         self.models_dir.mkdir(parents=True, exist_ok=True)

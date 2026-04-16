@@ -1,7 +1,9 @@
 {
-  "epochs": 60,
-  "final_loss": 1.1143214702606201,
-  "best_loss": 1.1137038469314575,
+  "epochs": 1,
+  "final_loss": 1.47939133644104,
+  "best_loss": 1.47939133644104,
   "hidden_dim": 384,
-  "dropout": 0.1
+  "dropout": 0.1,
+  "num_node_types": 4,
+  "num_relation_types": 36
 }

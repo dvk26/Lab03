@@ -12,14 +12,27 @@ def load_json(path: Path) -> list[dict] | dict:
 
 def load_graph_bundle(artifacts_dir: Path) -> dict:
     nodes = load_json(artifacts_dir / "graph_nodes.json")
-    edges = load_json(artifacts_dir / "graph_edges.json")
     manifest = load_json(artifacts_dir / "manifest.json")
     raw_embeddings = np.load(artifacts_dir / "raw_embeddings.npy")
     edge_index = np.load(artifacts_dir / "edge_index.npy")
-    return {
+
+    edges_path = artifacts_dir / "graph_edges.json"
+    edges = load_json(edges_path) if edges_path.exists() else []
+
+    bundle = {
         "nodes": nodes,
         "edges": edges,
         "manifest": manifest,
         "raw_embeddings": raw_embeddings,
         "edge_index": edge_index,
     }
+
+    node_type_path = artifacts_dir / "node_type_ids.npy"
+    if node_type_path.exists():
+        bundle["node_type_ids"] = np.load(node_type_path)
+
+    edge_type_path = artifacts_dir / "edge_type_ids.npy"
+    if edge_type_path.exists():
+        bundle["edge_type_ids"] = np.load(edge_type_path)
+
+    return bundle

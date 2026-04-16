@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import random
 import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Iterable, Sequence
 
 from datasets import load_dataset
@@ -113,6 +115,58 @@ def _iter_raw_records(dataset_id: str, split: str) -> Iterable[dict]:
         yield row
 
 
+def load_medical_records_from_property_graph(
+    property_graph_dir: Path,
+    max_records: int,
+    sample_seed: int,
+) -> list[MedicalRecord]:
+    property_graph_path = property_graph_dir / "property_graph_store.json"
+    if not property_graph_path.exists():
+        return []
+
+    payload = json.loads(property_graph_path.read_text(encoding="utf-8"))
+    parsed: list[MedicalRecord] = []
+
+    for node in payload.get("nodes", {}).values():
+        if node.get("label") != "text_chunk":
+            continue
+
+        properties = dict(node.get("properties", {}))
+        question = str(properties.get("question", "")).strip()
+        answer = str(node.get("text") or properties.get("text") or "").strip()
+        if not question or not answer:
+            continue
+
+        question_type = str(
+            properties.get("question_type") or infer_question_type(question)
+        ).strip() or "overview"
+        condition = str(
+            properties.get("condition") or normalize_condition(question, question_type)
+        ).strip() or "Unknown Condition"
+        doc_id = str(
+            properties.get("doc_id")
+            or node.get("id_")
+            or _stable_doc_id("property_graph", question, answer)
+        ).strip()
+        if not doc_id:
+            continue
+
+        parsed.append(
+            MedicalRecord(
+                doc_id=doc_id,
+                question=question,
+                answer=answer,
+                question_type=question_type,
+                condition=condition,
+                source_text=str(properties.get("source_text") or build_source_text(question, answer)),
+                source_dataset=str(properties.get("source_dataset") or "property_graph"),
+            )
+        )
+
+    parsed.sort(key=lambda record: (record.doc_id, record.question))
+    return stratified_sample(parsed, max_records, sample_seed)
+
+
 def load_medical_records(config: BuildConfig) -> list[MedicalRecord]:
     parsed: list[MedicalRecord] = []
     for row in _iter_raw_records(config.dataset_id, config.dataset_split):
@@ -135,6 +189,17 @@ def load_medical_records(config: BuildConfig) -> list[MedicalRecord]:
             )
         )
     return stratified_sample(parsed, config.max_records, config.sample_seed)
+
+
+def load_available_medical_records(config: BuildConfig) -> list[MedicalRecord]:
+    cached_records = load_medical_records_from_property_graph(
+        property_graph_dir=config.property_graph_dir,
+        max_records=config.max_records,
+        sample_seed=config.sample_seed,
+    )
+    if cached_records:
+        return cached_records
+    return load_medical_records(config)
 
 
 def stratified_sample(
@@ -184,4 +249,3 @@ def records_to_documents(records: Sequence[MedicalRecord]) -> list[Document]:
             )
         )
     return documents
-
