@@ -11,13 +11,13 @@ pinned: false
 
 This repository implements the full Lab 03 pipeline from the provided lab brief:
 
-1. load a healthcare corpus from Hugging Face
-2. build a LlamaIndex `PropertyGraphIndex`
-3. export the graph to a PyTorch Geometric-compatible format
-4. train a GNN that produces structure-aware node vectors
-5. combine raw semantic similarity and GNN structural similarity in a custom `BaseRetriever`
-6. generate the answer with an allowed quantized GGUF model running through `llama-cpp`
-7. serve the pipeline through a Gradio app suitable for Hugging Face Spaces
+1. Load a healthcare corpus from Hugging Face
+2. Build a LlamaIndex `PropertyGraphIndex`
+3. Export the graph to a PyTorch Geometric-compatible format
+4. Train a GNN that produces structure-aware node vectors
+5. Combine raw semantic similarity and GNN structural similarity in a custom `BaseRetriever`
+6. Generate the answer with an allowed quantized GGUF model running through `llama-cpp`
+7. Serve the pipeline through a Gradio app suitable for Hugging Face Spaces
 
 ## Dataset
 
